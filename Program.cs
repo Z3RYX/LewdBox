@@ -30,7 +30,8 @@ namespace LewdBox
                 .BuildServiceProvider();
 
             //Bot Token
-            string TOKEN = null;
+            string[] lines = File.ReadAllLines("token");
+            string TOKEN = lines[0];
 
             //event subscription
             _client.Log += Log;
