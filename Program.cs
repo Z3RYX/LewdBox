@@ -95,9 +95,9 @@ namespace LewdBox
         {
             string prefix = "//";
 
-            if (File.Exists(@"servers\" + serverID))
+            if (File.Exists(@"servers/" + serverID))
             {
-                string[] lines = File.ReadAllLines(@"servers\" + serverID);
+                string[] lines = File.ReadAllLines(@"servers/" + serverID);
                 prefix = lines[0];
             }
 
@@ -106,14 +106,14 @@ namespace LewdBox
 
         public static void ResetPrefix(ulong serverID)
         {
-            if (File.Exists(@"servers\" + serverID))
-                File.Delete(@"servers\" + serverID);
+            if (File.Exists(@"servers/" + serverID))
+                File.Delete(@"servers/" + serverID);
         }
 
         public static void SetPrefix(ulong serverID, string prefix)
         {
             Directory.CreateDirectory("servers");
-            StreamWriter w = new StreamWriter(@"servers\" + serverID, false);
+            StreamWriter w = new StreamWriter(@"servers/" + serverID, false);
 
             w.Write(prefix);
             w.Close();

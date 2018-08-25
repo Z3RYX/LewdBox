@@ -13,7 +13,7 @@ namespace LewdBox
         [Command("help")]
         public async Task HelpAsync()
         {
-            string[] lines = File.ReadAllLines(@"texts\help");
+            string[] lines = File.ReadAllLines(@"texts/help");
 
             string helpText = string.Join("\n", lines);
 
@@ -23,7 +23,7 @@ namespace LewdBox
         [Command("help")]
         public async Task HelpAsync(string command)
         {
-            string[] lines = File.ReadAllLines(@"texts\help_" + command);
+            string[] lines = File.ReadAllLines(@"texts/help_" + command);
 
             string helpText = string.Join("\n", lines);
 
@@ -45,8 +45,8 @@ namespace LewdBox
         [Command("edit"), RequireOwner]
         public async Task EditAsync(string command, int lineNum, [Remainder]string text)
         {
-            string[] lines = File.ReadAllLines(@"texts\" + command);
-            StreamWriter w = new StreamWriter(@"texts\" + command, false);
+            string[] lines = File.ReadAllLines(@"texts/" + command);
+            StreamWriter w = new StreamWriter(@"texts/" + command, false);
             lineNum--;
 
             lines[lineNum] = text;
@@ -72,5 +72,14 @@ namespace LewdBox
             await Context.Guild.LeaveAsync();
         }
         #endregion Kick Me
+
+        #region Kill
+        [Command("kill"),RequireOwner]
+        public async Task KillAsync()
+        {
+            await ReplyAsync("Shutting down");
+            Environment.Exit(0);
+        }
+        #endregion Kill
     }
 }
