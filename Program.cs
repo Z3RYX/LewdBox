@@ -71,6 +71,7 @@ namespace LewdBox
             if (message.Content == "//resetprefix")
             {
                 FileSystem.ResetPrefix(context.Guild.Id);
+                await context.Channel.SendMessageAsync("Server prefix reset");
                 return;
             }
 
