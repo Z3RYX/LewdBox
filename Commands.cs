@@ -63,5 +63,14 @@ namespace LewdBox
             await ReplyAsync("Changed line " + lineNum + " to " + text);
         }
         #endregion Edit
+
+        #region Kick Me
+        [Command("kickme"), RequireUserPermission(Discord.GuildPermission.Administrator)]
+        public async Task KickMeAsync()
+        {
+            await ReplyAsync("Goodbye People");
+            await Context.Guild.LeaveAsync();
+        }
+        #endregion Kick Me
     }
 }
