@@ -4,3 +4,4 @@ With LewdBox you can collect them all. Show off your collection to others. Trade
 
 # Invite
 Currently there is no invite for LewdBox. I will include an invite link and the website once the main features of LewdBox are done.
+However there is an official LewdBox Discord server where you can test LewdBox even in  its alpha stage.
