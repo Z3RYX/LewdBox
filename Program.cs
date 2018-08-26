@@ -80,7 +80,7 @@ namespace LewdBox
 
             int argPos = 0;
 
-            if (message.HasStringPrefix(prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos) || message.Content == "//help")
+            if (message.HasStringPrefix(prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos) || IsDefaultHelp(message.Content, ref argPos))
             {
                 var result = await _commands.ExecuteAsync(context, argPos, _services);
 
@@ -88,10 +88,37 @@ namespace LewdBox
                     Console.WriteLine(result.ErrorReason);
             }
         }
+
+        public bool IsDefaultHelp(string msg, ref int argPos)
+        {
+            if (msg.StartsWith("//help"))
+            {
+                argPos = 2;
+                return true;
+            }
+            return false;
+        }
     }
 
+    /// <summary>
+    /// The filesystem that handles everything outside the code
+    /// </summary>
     static class FileSystem
     {
+        /// <summary>
+        /// Creates the user profile
+        /// </summary>
+        /// <param name="userID">ID of the user</param>
+        public static void CreateUser(ulong userID)
+        {
+
+        }
+
+        /// <summary>
+        /// Gets the servers prefix if it has been changed
+        /// </summary>
+        /// <param name="serverID">ID of the server</param>
+        /// <returns>New prefix</returns>
         public static string GetPrefix(ulong serverID)
         {
             string prefix = "//";
@@ -105,12 +132,21 @@ namespace LewdBox
             return prefix;
         }
 
+        /// <summary>
+        /// Resets the prefix of the server back to //
+        /// </summary>
+        /// <param name="serverID">ID of the server</param>
         public static void ResetPrefix(ulong serverID)
         {
             if (File.Exists(@"servers/" + serverID))
                 File.Delete(@"servers/" + serverID);
         }
 
+        /// <summary>
+        /// Changes the prefix of the server
+        /// </summary>
+        /// <param name="serverID">ID of the server</param>
+        /// <param name="prefix">New prefix</param>
         public static void SetPrefix(ulong serverID, string prefix)
         {
             Directory.CreateDirectory("servers");
