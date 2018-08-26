@@ -62,6 +62,18 @@ namespace LewdBox
 
             await ReplyAsync("Changed line " + lineNum + " to " + text);
         }
+
+        [Command("edit"), RequireOwner]
+        public async Task EditAsync(string command, [Remainder]string text)
+        {
+            StreamWriter w = new StreamWriter(@"texts/" + command, false);
+
+            w.Write(text);
+
+            w.Close();
+
+            await ReplyAsync("Changed text to " + text);
+        }
         #endregion Edit
 
         #region Kick Me
@@ -81,5 +93,22 @@ namespace LewdBox
             Environment.Exit(0);
         }
         #endregion Kill
+
+        #region Register
+        [Command("register")]
+        public async Task RegisterAsync()
+        {
+            FileSystem.CreateUser(Context.Message.Author.Id, Context.Message.Author.Username, Context.Message.Author.GetAvatarUrl(Discord.ImageFormat.Auto));
+
+            string[] Players = File.ReadAllLines("PlayerID");
+            await Context.Client.SetGameAsync("//help | " + Players[0] + " Players");
+
+            await ReplyAsync("Thank you for registering " + Context.Message.Author.Username + ". Have fun collecting Lewd Boxes.");
+        }
+        #endregion Register
+
+        #region Profile
+
+        #endregion Profile
     }
 }

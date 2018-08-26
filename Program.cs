@@ -42,7 +42,9 @@ namespace LewdBox
 
             await _client.StartAsync();
 
-            await _client.SetGameAsync("//help | lewdbox.zeryx.xyz");
+            string[] Players = File.ReadAllLines("PlayerID");
+
+            await _client.SetGameAsync("//help | " + Players[0] + " Players");
 
             await Task.Delay(-1);
         }
@@ -109,9 +111,30 @@ namespace LewdBox
         /// Creates the user profile
         /// </summary>
         /// <param name="userID">ID of the user</param>
-        public static void CreateUser(ulong userID)
+        /// <param name="name">Username of the user</param>
+        /// <param name="avaURL">URL to the users avatar</param>
+        public static void CreateUser(ulong userID, string name, string avaURL)
         {
+            if (File.Exists("users/" + userID))
+                return;
 
+            string[] lines = File.ReadAllLines("PlayerID");
+            int PlayerID = Convert.ToInt32(lines[0]);
+            PlayerID++;
+            StreamWriter id = new StreamWriter("PlayerID", false);
+            id.Write(PlayerID);
+            id.Close();
+
+            StreamWriter w = new StreamWriter("users/" + userID);
+
+            w.Write(
+                userID + "\n" +
+                name + "\n" +
+                avaURL + "\n" +
+                "2000\n" +
+                PlayerID);
+
+            w.Close();
         }
 
         /// <summary>
