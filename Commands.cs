@@ -13,7 +13,7 @@ namespace LewdBox
         [Command("help")]
         public async Task HelpAsync()
         {
-            string[] lines = File.ReadAllLines(@"texts/help");
+            string[] lines = File.ReadAllLines("texts/help");
 
             string helpText = string.Join("\n", lines);
 
@@ -23,7 +23,7 @@ namespace LewdBox
         [Command("help")]
         public async Task HelpAsync(string command)
         {
-            string[] lines = File.ReadAllLines(@"texts/help_" + command);
+            string[] lines = File.ReadAllLines("texts/help_" + command);
 
             string helpText = string.Join("\n", lines);
 
@@ -43,10 +43,15 @@ namespace LewdBox
 
         #region Edit
         [Command("edit"), RequireOwner]
-        public async Task EditAsync(string command, int lineNum, [Remainder]string text)
+        public async Task EditAsync(string path, int lineNum, [Remainder]string text)
         {
-            string[] lines = File.ReadAllLines(@"texts/" + command);
-            StreamWriter w = new StreamWriter(@"texts/" + command, false);
+            if (!File.Exists(path))
+            {
+                await ReplyAsync("File does not exist");
+                return;
+            }
+            string[] lines = File.ReadAllLines(path);
+            StreamWriter w = new StreamWriter(path, false);
             lineNum--;
 
             lines[lineNum] = text;
@@ -64,15 +69,22 @@ namespace LewdBox
         }
 
         [Command("edit"), RequireOwner]
-        public async Task EditAsync(string command, [Remainder]string text)
+        public async Task EditAsync(string path, [Remainder]string text)
         {
-            StreamWriter w = new StreamWriter(@"texts/" + command, false);
+            try
+            {
+                StreamWriter w = new StreamWriter(path, false);
 
-            w.Write(text);
+                w.Write(text);
 
-            w.Close();
+                w.Close();
 
-            await ReplyAsync("Changed text to " + text);
+                await ReplyAsync("Changed text to " + text);
+            }
+            catch (Exception e)
+            {
+                await ReplyAsync("Couldn't edit file\n`" + e.Message + "`");
+            }
         }
         #endregion Edit
 
@@ -81,6 +93,7 @@ namespace LewdBox
         public async Task KickMeAsync()
         {
             await ReplyAsync("Goodbye People");
+            FileSystem.ResetPrefix(Context.Guild.Id);
             await Context.Guild.LeaveAsync();
         }
         #endregion Kick Me
@@ -101,7 +114,7 @@ namespace LewdBox
             FileSystem.CreateUser(Context.Message.Author.Id, Context.Message.Author.Username, Context.Message.Author.GetAvatarUrl(Discord.ImageFormat.Auto));
 
             string[] Players = File.ReadAllLines("PlayerID");
-            await Context.Client.SetGameAsync("//help | " + Players[0] + " Players");
+            await Context.Client.SetGameAsync("//help | " + Players[0] + " Players in " + Context.Client.Guilds.Count + " Guild");
 
             await ReplyAsync("Thank you for registering " + Context.Message.Author.Username + ". Have fun collecting Lewd Boxes.");
         }
@@ -110,5 +123,13 @@ namespace LewdBox
         #region Profile
 
         #endregion Profile
+
+        #region Update
+        [Command("update")]
+        public async Task UpdateAsync()
+        {
+            await ReplyAsync(FileSystem.UpdateUser(Context.Message.Author.Id));
+        }
+        #endregion Update
     }
 }

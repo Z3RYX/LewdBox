@@ -35,6 +35,8 @@ namespace LewdBox
 
             //event subscription
             _client.Log += Log;
+            _client.JoinedGuild += JoinedGuild;
+            _client.LeftGuild += LeftGuild;
 
             await RegisterCommandsAsync();
 
@@ -44,7 +46,7 @@ namespace LewdBox
 
             string[] Players = File.ReadAllLines("PlayerID");
 
-            await _client.SetGameAsync("//help | " + Players[0] + " Players");
+            await _client.SetGameAsync("//help | " + Players[0] + " Players in " + _client.Guilds.Count + " Guild");
 
             await Task.Delay(-1);
         }
@@ -53,6 +55,20 @@ namespace LewdBox
         {
             Console.WriteLine(arg);
 
+            return Task.CompletedTask;
+        }
+
+        public Task JoinedGuild(SocketGuild e)
+        {
+            string[] Players = File.ReadAllLines("PlayerID");
+            _client.SetGameAsync("//help | " + Players[0] + " Players in " + _client.Guilds.Count + " Guild");
+            return Task.CompletedTask;
+        }
+
+        public Task LeftGuild(SocketGuild e)
+        {
+            string[] Players = File.ReadAllLines("PlayerID");
+            _client.SetGameAsync("//help | " + Players[0] + " Players in " + _client.Guilds.Count + " Guild");
             return Task.CompletedTask;
         }
 
@@ -128,6 +144,7 @@ namespace LewdBox
             StreamWriter w = new StreamWriter("users/" + userID);
 
             w.Write(
+                "version" + GetVersion() + "\n" +
                 userID + "\n" +
                 name + "\n" +
                 avaURL + "\n" +
@@ -155,6 +172,12 @@ namespace LewdBox
             return prefix;
         }
 
+        public static string GetVersion()
+        {
+            string[] lines = File.ReadAllLines("botinfo");
+            return lines[0];
+        }
+
         /// <summary>
         /// Resets the prefix of the server back to //
         /// </summary>
@@ -162,7 +185,16 @@ namespace LewdBox
         public static void ResetPrefix(ulong serverID)
         {
             if (File.Exists(@"servers/" + serverID))
-                File.Delete(@"servers/" + serverID);
+            {
+                string[] lines = File.ReadAllLines("servers/" + serverID);
+                StreamWriter w = new StreamWriter("servers/" + serverID, false);
+                lines[0] = "//";
+                foreach(string line in lines)
+                {
+                    w.WriteLine(line);
+                }
+                w.Close();
+            }
         }
 
         /// <summary>
@@ -172,11 +204,38 @@ namespace LewdBox
         /// <param name="prefix">New prefix</param>
         public static void SetPrefix(ulong serverID, string prefix)
         {
-            Directory.CreateDirectory("servers");
-            StreamWriter w = new StreamWriter(@"servers/" + serverID, false);
+            StreamWriter w = new StreamWriter("servers/" + serverID, false);
 
             w.Write(prefix);
             w.Close();
+        }
+
+        public static string UpdateUser(ulong userID)
+        {
+            if (!File.Exists("users/" + userID))
+                return "Please register an account first";
+
+            string[] lines = File.ReadAllLines("users/" + userID);
+
+            if (lines[0].StartsWith("version"))
+            {
+                if (lines[0].Substring(7).Equals(GetVersion()))
+                    return "Already at newest version";
+
+                //TODO Put updates here
+                StreamWriter w = new StreamWriter("users/" + userID, false);
+
+                w.Close();
+            }
+            //update old accounts
+            StreamWriter old = new StreamWriter("users/" + userID, false);
+            old.WriteLine("version" + GetVersion());
+            foreach(string line in lines)
+            {
+                old.WriteLine(line);
+            }
+            old.Close();
+            return "Updated account";
         }
     }
 }
