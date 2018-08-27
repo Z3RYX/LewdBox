@@ -37,16 +37,13 @@ namespace LewdBox
             _client.Log += Log;
             _client.JoinedGuild += JoinedGuild;
             _client.LeftGuild += LeftGuild;
+            _client.Ready += Ready;
 
             await RegisterCommandsAsync();
 
             await _client.LoginAsync(Discord.TokenType.Bot, TOKEN);
 
             await _client.StartAsync();
-
-            string[] Players = File.ReadAllLines("PlayerID");
-
-            await _client.SetGameAsync("//help | " + Players[0] + " Players in " + _client.Guilds.Count + " Guild");
 
             await Task.Delay(-1);
         }
@@ -60,15 +57,44 @@ namespace LewdBox
 
         public Task JoinedGuild(SocketGuild e)
         {
+            //Set activity
             string[] Players = File.ReadAllLines("PlayerID");
-            _client.SetGameAsync("//help | " + Players[0] + " Players in " + _client.Guilds.Count + " Guild");
+            IActivity game = new Game("//help | " + Players[0] + " Players in " + _client.Guilds.Count + " Guild") as IActivity;
+            _client.SetActivityAsync(game);
+
+            //Send join message
+            try
+            {
+                ITextChannel channel = e.DefaultChannel as ITextChannel;
+                channel.SendMessageAsync(
+                    "**Hello, I'm LewdBox.**\n\n" +
+                    "I have been summoned to bring fun upon this server.\n" +
+                    "If you haven't registered an account yet, use //register\n\n" +
+                    "For more information use //help or //info\n" +
+                    "Have fun.");
+            }
+            catch (Exception args)
+            {
+                Console.WriteLine(args.Message);
+                return Task.CompletedTask;
+            }
+            
             return Task.CompletedTask;
         }
 
         public Task LeftGuild(SocketGuild e)
         {
             string[] Players = File.ReadAllLines("PlayerID");
-            _client.SetGameAsync("//help | " + Players[0] + " Players in " + _client.Guilds.Count + " Guild");
+            IActivity game = new Game("//help | " + Players[0] + " Players in " + _client.Guilds.Count + " Guild") as IActivity;
+            _client.SetActivityAsync(game);
+            return Task.CompletedTask;
+        }
+
+        public Task Ready()
+        {
+            string[] Players = File.ReadAllLines("PlayerID");
+            IActivity game = new Game("//help | " + Players[0] + " Players in " + _client.Guilds.Count + " Guild") as IActivity;
+            _client.SetActivityAsync(game);
             return Task.CompletedTask;
         }
 
@@ -129,10 +155,10 @@ namespace LewdBox
         /// <param name="userID">ID of the user</param>
         /// <param name="name">Username of the user</param>
         /// <param name="avaURL">URL to the users avatar</param>
-        public static void CreateUser(ulong userID, string name, string avaURL)
+        public static bool CreateUser(ulong userID, string name, string avaURL)
         {
             if (File.Exists("users/" + userID))
-                return;
+                return true;
 
             string[] lines = File.ReadAllLines("PlayerID");
             int PlayerID = Convert.ToInt32(lines[0]);
@@ -152,6 +178,7 @@ namespace LewdBox
                 PlayerID);
 
             w.Close();
+            return false;
         }
 
         /// <summary>
@@ -170,6 +197,13 @@ namespace LewdBox
             }
 
             return prefix;
+        }
+
+        public static int GetUserMoney(ulong userID)
+        {
+            string[] lines = File.ReadAllLines("users/" + userID);
+            int rslt = Convert.ToInt32(lines[4]);
+            return rslt;
         }
 
         public static string GetVersion()
@@ -236,6 +270,14 @@ namespace LewdBox
             }
             old.Close();
             return "Updated account";
+        }
+
+        public static bool UserExists(ulong userID)
+        {
+            if (File.Exists("users/" + userID))
+                return true;
+            else
+                return false;
         }
     }
 }
