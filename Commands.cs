@@ -17,7 +17,7 @@ namespace LewdBox
             Console.WriteLine(msg);
         }
 
-        #region Help Command
+        #region Help
         [Command("help")]
         public async Task HelpAsync()
         {
@@ -37,7 +37,7 @@ namespace LewdBox
 
             await ReplyAsync(helpText);
         }
-        #endregion Help Command
+        #endregion Help
 
         #region Set Prefix
         [Command("setprefix"), RequireUserPermission(Discord.GuildPermission.Administrator)]
@@ -137,36 +137,23 @@ namespace LewdBox
         [Command("profile")]
         public async Task ProfileAsync()
         {
-            Log("Command called");
             if (!FileSystem.UserExists(Context.User.Id))
             {
                 await ReplyAsync("Please register an account first.");
                 return;
             }
-            string desc = "Money: " + Convert.ToString(FileSystem.GetUserMoney(Context.User.Id));
-            Log("User exists");
             EmbedBuilder e = new EmbedBuilder();
-            Log("EmdedBuilder instanciated");
+
+            object money = FileSystem.GetUserMoney(Context.User.Id) + " ℄";
+
             e.WithColor(Color.Blue);
-            Log("Color changed");
             e.WithTitle(Context.User.Username);
-            Log("Title added");
             e.WithThumbnailUrl(Context.User.GetAvatarUrl());
-            Log("Thumbnail added");
-            e.AddField(desc, new object(), false);
-            Log("EmbedBuilder completely edited");
+            e.AddField("LewdCoins", money, false);
+
             await ReplyAsync("", embed: e.Build());
-            Log("Reply send");
         }
         #endregion Profile
-
-        #region Update
-        [Command("update")]
-        public async Task UpdateAsync()
-        {
-            await ReplyAsync(FileSystem.UpdateUser(Context.Message.Author.Id));
-        }
-        #endregion Update
 
         #region Test
         [Command("test"), RequireOwner]
@@ -186,5 +173,31 @@ namespace LewdBox
             }
         }
         #endregion Test
+
+        #region Settle
+        [Command("settle"), RequireUserPermission(GuildPermission.Administrator)]
+        public async Task SettleAsync()
+        {
+            FileSystem.AddSettle(Context.Guild.Id, Context.Channel.Id);
+            await ReplyAsync("I've settled myself here\nDo " + FileSystem.GetPrefix(Context.Guild.Id) + "unsettle to set me free again");
+        }
+        #endregion Settle
+
+        #region Unsettle
+        [Command("unsettle"), RequireUserPermission(GuildPermission.Administrator)]
+        public async Task UnsettleAsync()
+        {
+            if (FileSystem.RemoveSettle(Context.Guild.Id))
+            {
+                await ReplyAsync("Thanks for setting me free again");
+                return;
+            }
+            else
+            {
+                await ReplyAsync("I haven't been settled yet...\nTo do that use " + FileSystem.GetPrefix(Context.Guild.Id) + "settle");
+                return;
+            }
+        }
+        #endregion Unsettle
     }
 }

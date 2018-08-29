@@ -113,6 +113,9 @@ namespace LewdBox
 
             var context = new SocketCommandContext(_client, message);
 
+            if (FileSystem.GetSettle(context.Guild.Id, context) != context.Channel)
+                return;
+
             if (message.Content == "//resetprefix")
             {
                 FileSystem.ResetPrefix(context.Guild.Id);
@@ -149,12 +152,33 @@ namespace LewdBox
     /// </summary>
     static class FileSystem
     {
-        /// <summary>
-        /// Creates the user profile
-        /// </summary>
-        /// <param name="userID">ID of the user</param>
-        /// <param name="name">Username of the user</param>
-        /// <param name="avaURL">URL to the users avatar</param>
+        public static void AddSettle(ulong serverID, ulong channel)
+        {
+            bool exists = false;
+            string[] lines = { "" , "" };
+
+            if (File.Exists("servers/" + serverID))
+            {
+                lines = File.ReadAllLines("servers/" + serverID);
+                exists = true;
+            }
+
+            StreamWriter w = new StreamWriter("servers/" + serverID, false);
+
+            if (exists)
+            {
+                w.WriteLine(lines[0]);
+                w.WriteLine(channel);
+            }
+            else
+            {
+                w.WriteLine("//");
+                w.WriteLine(channel);
+            }
+
+            w.Close();
+        }
+
         public static bool CreateUser(ulong userID, string name, string avaURL)
         {
             if (File.Exists("users/" + userID))
@@ -199,6 +223,21 @@ namespace LewdBox
             return prefix;
         }
 
+        public static SocketTextChannel GetSettle(ulong serverID, SocketCommandContext msg)
+        {
+            SocketTextChannel conchannel = msg.Channel as SocketTextChannel;
+
+            if (!File.Exists("servers/" + serverID))
+                return conchannel;
+
+            string[] lines = File.ReadAllLines("servers/" + serverID);
+            if (lines.Length == 1)
+                return conchannel;
+
+            SocketTextChannel result = msg.Guild.GetChannel(Convert.ToUInt64(lines[1])) as SocketTextChannel;
+            return result;
+        }
+
         public static int GetUserMoney(ulong userID)
         {
             string[] lines = File.ReadAllLines("users/" + userID);
@@ -210,6 +249,23 @@ namespace LewdBox
         {
             string[] lines = File.ReadAllLines("botinfo");
             return lines[0];
+        }
+
+        public static bool RemoveSettle(ulong serverID)
+        {
+            if (File.Exists("servers/" + serverID))
+            {
+                string[] lines = File.ReadAllLines("servers/" + serverID);
+                Console.WriteLine(lines.Length);
+                StreamWriter w = new StreamWriter("servers/" + serverID, false);
+                w.WriteLine(lines[0]);
+                w.Close();
+                if (lines.Length == 1)
+                    return false;
+                return true;
+            }
+            else
+                return false;
         }
 
         /// <summary>
@@ -244,17 +300,17 @@ namespace LewdBox
             w.Close();
         }
 
-        public static string UpdateUser(ulong userID)
+        public static void UpdateUser(ulong userID)
         {
             if (!File.Exists("users/" + userID))
-                return "Please register an account first";
+                return;
 
             string[] lines = File.ReadAllLines("users/" + userID);
 
             if (lines[0].StartsWith("version"))
             {
                 if (lines[0].Substring(7).Equals(GetVersion()))
-                    return "Already at newest version";
+                    return;
 
                 //TODO Put updates here
                 StreamWriter w = new StreamWriter("users/" + userID, false);
@@ -269,7 +325,7 @@ namespace LewdBox
                 old.WriteLine(line);
             }
             old.Close();
-            return "Updated account";
+            return;
         }
 
         public static bool UserExists(ulong userID)
