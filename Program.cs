@@ -38,6 +38,7 @@ namespace LewdBox
             _client.JoinedGuild += JoinedGuild;
             _client.LeftGuild += LeftGuild;
             _client.Ready += Ready;
+            _client.ChannelDestroyed += ChannelDestroyed;
 
             await RegisterCommandsAsync();
 
@@ -95,6 +96,13 @@ namespace LewdBox
             string[] Players = File.ReadAllLines("PlayerID");
             IActivity game = new Game("//help | " + Players[0] + " Players in " + _client.Guilds.Count + " Guild") as IActivity;
             _client.SetActivityAsync(game);
+            return Task.CompletedTask;
+        }
+
+        public Task ChannelDestroyed(SocketChannel e)
+        {
+            SocketGuildChannel channel = e as SocketGuildChannel;
+            FileSystem.RemoveSettle(channel.Guild.Id);
             return Task.CompletedTask;
         }
 
