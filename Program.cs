@@ -42,9 +42,16 @@ namespace LewdBox
 
             await RegisterCommandsAsync();
 
-            await _client.LoginAsync(Discord.TokenType.Bot, TOKEN);
+            await _client.LoginAsync(TokenType.Bot, TOKEN);
 
             await _client.StartAsync();
+
+            string inp = Console.ReadLine();
+            if (inp.Equals("exit"))
+                Environment.Exit(0);
+
+            if (inp.Equals("start"))
+                await _client.StartAsync();
 
             await Task.Delay(-1);
         }

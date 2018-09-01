@@ -17,6 +17,30 @@ namespace LewdBox
             Console.WriteLine(msg);
         }
 
+        #region GetStreamFromURL
+        public Stream GetStreamFromURL(string imageUrl)
+        {
+            Stream stream;
+
+            try
+            {
+                System.Net.HttpWebRequest webRequest = (System.Net.HttpWebRequest)System.Net.HttpWebRequest.Create(imageUrl);
+                webRequest.AllowWriteStreamBuffering = true;
+                webRequest.Timeout = 30000;
+
+                System.Net.WebResponse webResponse = webRequest.GetResponse();
+
+                stream = webResponse.GetResponseStream();
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+
+            return stream;
+        }
+        #endregion GetStreamFromURL
+
         #region Help
         [Command("help")]
         public async Task HelpAsync()
@@ -111,7 +135,7 @@ namespace LewdBox
         public async Task KillAsync()
         {
             await ReplyAsync("Shutting down");
-            Environment.Exit(0);
+            await Context.Client.StopAsync();
         }
         #endregion Kill
 
@@ -137,6 +161,7 @@ namespace LewdBox
         [Command("profile")]
         public async Task ProfileAsync()
         {
+            FileSystem.UpdateUser(Context.User.Id);
             if (!FileSystem.UserExists(Context.User.Id))
             {
                 await ReplyAsync("Please register an account first.");
@@ -157,7 +182,7 @@ namespace LewdBox
 
         #region Test
         [Command("test"), RequireOwner]
-        public async Task TestAsync(string command, string name, string msg)
+        public async Task TestAsync(string command, string name = "Default Name", string msg = "")
         {
             switch (command)
             {
@@ -170,6 +195,31 @@ namespace LewdBox
                     await w.DeleteWebhookAsync();
                     await webhook.DeleteAsync();
                     break;
+
+                case "box":
+                    ulong id = 0;
+                    try
+                    {
+                        ITextChannel here = Context.Channel as ITextChannel;
+                        var iBox = await here.CreateWebhookAsync("Touhou Box");
+                        id = iBox.Id;
+
+                        DiscordWebhookClient weeb = new DiscordWebhookClient(iBox);
+
+                        await weeb.ModifyWebhookAsync(x => { x.Image = new Image(GetStreamFromURL("http://img.zeryx.xyz/LewdBoxLogo.jpg")); });
+                        await weeb.SendFileAsync(GetStreamFromURL("http://img.zeryx.xyz/lewdboxes/touhou/cir001.png"), "cir001.png", "You got Cirno!");
+                        await weeb.DeleteWebhookAsync();
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        Log(e.Message);
+
+                        ITextChannel tempc = Context.Channel as ITextChannel;
+                        var tempw = await tempc.GetWebhookAsync(id);
+                        await tempw.DeleteAsync();
+                        break;
+                    }
             }
         }
         #endregion Test
@@ -199,5 +249,21 @@ namespace LewdBox
             }
         }
         #endregion Unsettle
+
+        #region Info
+        [Command("info")]
+        public async Task InfoAsync()
+        {
+            EmbedBuilder embed = new EmbedBuilder();
+            embed
+                .WithColor(Color.Blue)
+                .WithTitle("LewdBox Info")
+                .WithThumbnailUrl(Context.Client.CurrentUser.GetAvatarUrl())
+                .AddField("Basic", "I am a Discord bot written in C# by Z3RYX (ZeRyX#1079)", true)
+                .AddField("Nerd Stuff", "Wrapper: `Discord.Net beta 2.0`\nHost: Digital Ocean, Ubuntu server\nGitHub: http://github.com/Z3RYX/LewdBox", true);
+
+            await ReplyAsync("", embed: embed.Build());
+        }
+        #endregion Info
     }
 }
