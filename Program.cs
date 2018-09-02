@@ -167,6 +167,32 @@ namespace LewdBox
     /// </summary>
     static class FileSystem
     {
+        public static void AddDaily(SocketGuildUser user)
+        {
+            string[] lines = File.ReadAllLines("users/" + user.Id);
+            lines[6] = DateTime.UtcNow.ToUniversalTime().ToString();
+            StreamWriter w = new StreamWriter("users/" + user.Id);
+            foreach(string line in lines)
+            {
+                w.WriteLine(line);
+            }
+            w.Close();
+        }
+
+        public static void AddMoney(ulong userID, int value)
+        {
+            string[] lines = File.ReadAllLines("users/" + userID);
+            int money = Convert.ToInt32(lines[3]);
+            money += value;
+            lines[3] = money.ToString();
+            StreamWriter w = new StreamWriter("users/" + userID);
+            foreach(string line in lines)
+            {
+                w.WriteLine(line);
+            }
+            w.Close();
+        }
+
         public static void AddSettle(ulong serverID, ulong channel)
         {
             bool exists = false;
@@ -194,9 +220,20 @@ namespace LewdBox
             w.Close();
         }
 
-        public static bool CreateUser(ulong userID, string name, string avaURL)
+        public static bool CheckDaily(ulong UserID)
         {
-            if (File.Exists("users/" + userID))
+            DateTime now = DateTime.UtcNow;
+            string[] lines = File.ReadAllLines("users/" + UserID);
+            DateTime lastDaily = DateTime.Parse(lines[6]);
+            if (now.Subtract(TimeSpan.FromHours(24)) > lastDaily)
+                return true;
+            else
+                return false;
+        }
+
+        public static bool CreateUser(SocketGuildUser user)
+        {
+            if (File.Exists("users/" + user.Id))
                 return true;
 
             string[] lines = File.ReadAllLines("PlayerID");
@@ -206,18 +243,28 @@ namespace LewdBox
             id.Write(PlayerID);
             id.Close();
 
-            StreamWriter w = new StreamWriter("users/" + userID);
+            StreamWriter w = new StreamWriter("users/" + user.Id);
 
             w.Write(
-                "version" + GetVersion() + "\n" +
-                userID + "\n" +
-                name + "\n" +
-                avaURL + "\n" +
-                "2000\n" +
-                PlayerID);
+                "version" + GetVersion() + "\n" + //0 = Version
+                user.Id + "\n" + //1 = User ID
+                user.Username + "\n" + //2 = Username
+                "2000\n" + //3 = Money
+                PlayerID + "\n" + //4 = Player ID
+                DateTime.UtcNow + "\n" + //5 = Register Date
+                DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(1440))); //6 = Last Daily
 
             w.Close();
             return false;
+        }
+
+        public static TimeSpan GetDaily(ulong userID)
+        {
+            string[] lines = File.ReadAllLines("users/" + userID);
+            DateTime lastDaily = DateTime.Parse(lines[6]);
+            TimeSpan result = DateTime.UtcNow.Subtract(lastDaily);
+            result = TimeSpan.FromHours(24) - result;
+            return result;
         }
 
         /// <summary>
@@ -256,7 +303,7 @@ namespace LewdBox
         public static int GetUserMoney(ulong userID)
         {
             string[] lines = File.ReadAllLines("users/" + userID);
-            int rslt = Convert.ToInt32(lines[4]);
+            int rslt = Convert.ToInt32(lines[3]);
             return rslt;
         }
 
@@ -315,12 +362,12 @@ namespace LewdBox
             w.Close();
         }
 
-        public static void UpdateUser(ulong userID)
+        public static void UpdateUser(SocketGuildUser user)
         {
-            if (!File.Exists("users/" + userID))
+            if (!File.Exists("users/" + user.Id))
                 return;
 
-            string[] lines = File.ReadAllLines("users/" + userID);
+            string[] lines = File.ReadAllLines("users/" + user.Id);
 
             if (lines[0].StartsWith("version"))
             {
@@ -328,19 +375,19 @@ namespace LewdBox
                     return;
 
                 //TODO Put updates here
-                StreamWriter w = new StreamWriter("users/" + userID, false);
+                StreamWriter w = new StreamWriter("users/" + user.Id, false);
+
+                w.Write(
+                "version" + GetVersion() + "\n" + //0 = Version
+                user.Id + "\n" + //1 = User ID
+                user.Username + "\n" + //2 = Username
+                lines[3] + "\n" + //3 = Money
+                lines[4] + "\n" + //4 = Player ID
+                DateTime.Now + "\n" + //5 = Register Date
+                DateTime.Now.Subtract(TimeSpan.FromHours(24))); //6 = Last Daily
 
                 w.Close();
             }
-            //update old accounts
-            StreamWriter old = new StreamWriter("users/" + userID, false);
-            old.WriteLine("version" + GetVersion());
-            foreach(string line in lines)
-            {
-                old.WriteLine(line);
-            }
-            old.Close();
-            return;
         }
 
         public static bool UserExists(ulong userID)

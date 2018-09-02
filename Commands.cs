@@ -12,6 +12,7 @@ namespace LewdBox
 {
     public class Commands : ModuleBase<SocketCommandContext>
     {
+        // Normal Methods
         public static void Log(string msg)
         {
             Console.WriteLine(msg);
@@ -32,8 +33,9 @@ namespace LewdBox
 
                 stream = webResponse.GetResponseStream();
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
+                Log(e.Message);
                 return null;
             }
 
@@ -41,6 +43,8 @@ namespace LewdBox
         }
         #endregion GetStreamFromURL
 
+        // Async Methods
+        //Todo Order Methods!
         #region Help
         [Command("help")]
         public async Task HelpAsync()
@@ -143,7 +147,7 @@ namespace LewdBox
         [Command("register")]
         public async Task RegisterAsync()
         {
-            if (FileSystem.CreateUser(Context.Message.Author.Id, Context.Message.Author.Username, Context.Message.Author.GetAvatarUrl(Discord.ImageFormat.Auto)))
+            if (FileSystem.CreateUser(Context.User as SocketGuildUser))
             {
                 await ReplyAsync("You are already registered");
                 return;
@@ -161,12 +165,13 @@ namespace LewdBox
         [Command("profile")]
         public async Task ProfileAsync()
         {
-            FileSystem.UpdateUser(Context.User.Id);
             if (!FileSystem.UserExists(Context.User.Id))
             {
                 await ReplyAsync("Please register an account first.");
                 return;
             }
+            FileSystem.UpdateUser(Context.User as SocketGuildUser);
+            
             EmbedBuilder e = new EmbedBuilder();
 
             object money = FileSystem.GetUserMoney(Context.User.Id) + " ℄";
@@ -265,5 +270,27 @@ namespace LewdBox
             await ReplyAsync("", embed: embed.Build());
         }
         #endregion Info
+
+        #region Daily
+        [Command("daily")]
+        public async Task DailyAsync()
+        {
+            if (!FileSystem.UserExists(Context.User.Id))
+            {
+                await ReplyAsync("You haven't registered an account yet.");
+                return;
+            }
+            FileSystem.UpdateUser(Context.User as SocketGuildUser);
+            if (!FileSystem.CheckDaily(Context.User.Id))
+            {
+                TimeSpan time = FileSystem.GetDaily(Context.User.Id);
+                await ReplyAsync("Cannot use " + FileSystem.GetPrefix(Context.Guild.Id) + "daily for " + time.Hours + " hour(s) and " + time.Minutes + " minute(s).");
+                return;
+            }
+            FileSystem.AddMoney(Context.User.Id, 500);
+            FileSystem.AddDaily(Context.User as SocketGuildUser);
+            await ReplyAsync("Added 500 ℄ to your account.\nYou can use the daily command again in 24 hours.");
+        }
+        #endregion Daily
     }
 }
