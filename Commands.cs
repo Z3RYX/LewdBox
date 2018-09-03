@@ -180,6 +180,34 @@ namespace LewdBox
             e.WithTitle(Context.User.Username);
             e.WithThumbnailUrl(Context.User.GetAvatarUrl());
             e.AddField("LewdCoins", money, false);
+            e.AddField("Registered at", FileSystem.GetRegisterDate(Context.User), true);
+            e.AddField("PlayerID", FileSystem.GetProfile(Context.User).PlayerID, true);
+
+            await ReplyAsync("", embed: e.Build());
+        }
+
+        [Command("profile")]
+        public async Task ProfileAsync(SocketUser user)
+        {
+            if (!FileSystem.UserExists(user))
+            {
+                await ReplyAsync("User isn't registered");
+                return;
+            }
+            FileSystem.UpdateUser(user);
+
+            Profile profile = new Profile(user);
+
+            EmbedBuilder e = new EmbedBuilder();
+
+            object money = profile.Money + " ℄";
+
+            e.WithColor(Color.Blue);
+            e.WithTitle(user.Username);
+            e.WithThumbnailUrl(user.GetAvatarUrl());
+            e.AddField("LewdCoins", money, false);
+            e.AddField("Registered at", profile.RegisterDate, true);
+            e.AddField("PlayerID", profile.PlayerID, true);
 
             await ReplyAsync("", embed: e.Build());
         }
@@ -264,8 +292,8 @@ namespace LewdBox
                 .WithColor(Color.Blue)
                 .WithTitle("LewdBox Info")
                 .WithThumbnailUrl(Context.Client.CurrentUser.GetAvatarUrl())
-                .AddField("Basic", "I am a Discord bot written in C# by Z3RYX (ZeRyX#1079)", true)
-                .AddField("Nerd Stuff", "Wrapper: `Discord.Net beta 2.0`\nHost: Digital Ocean, Ubuntu server\nGitHub: http://github.com/Z3RYX/LewdBox", true);
+                .AddField("Basic", "I am a Discord bot written in C# by Z3RYX (ZeRyX#1079)\nThe official LewdBox Discord server is http://discord.gg/NczBD87", false)
+                .AddField("Nerd Stuff", "Wrapper: `Discord.Net beta 2.0`\nHost: Digital Ocean, Ubuntu server\nGitHub: http://github.com/Z3RYX/LewdBox \nTrello: https://trello.com/b/LjQucLAr/lewdbox-discord-bot", false);
 
             await ReplyAsync("", embed: embed.Build());
         }

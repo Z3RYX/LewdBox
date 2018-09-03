@@ -267,6 +267,12 @@ namespace LewdBox
             return result;
         }
 
+        public static int GetPlayerID(SocketUser user)
+        {
+            string[] lines = File.ReadAllLines("users/" + user.Id);
+            return Convert.ToInt32(lines[4]);
+        }
+
         /// <summary>
         /// Gets the servers prefix if it has been changed
         /// </summary>
@@ -283,6 +289,12 @@ namespace LewdBox
             }
 
             return prefix;
+        }
+
+        public static Profile GetProfile(SocketUser user)
+        {
+            Profile profile = new Profile(user);
+            return profile;
         }
 
         public static DateTime GetRegisterDate(SocketUser user)
@@ -417,6 +429,30 @@ namespace LewdBox
                 return true;
             else
                 return false;
+        }
+    }
+
+    public class Profile
+    {
+        SocketUser user;
+        public ulong ID { get; }
+        public int Money { get; set; }
+        public int PlayerID { get; }
+        public DateTime RegisterDate { get; }
+
+        public Profile(SocketUser user)
+        {
+            this.user = user;
+            ID = user.Id;
+            Money = FileSystem.GetUserMoney(user);
+            PlayerID = FileSystem.GetPlayerID(user);
+            RegisterDate = FileSystem.GetRegisterDate(user);
+        }
+
+        public void AddMoney(int value)
+        {
+            FileSystem.AddMoney(user, value);
+            Money = FileSystem.GetUserMoney(user);
         }
     }
 }
