@@ -147,7 +147,7 @@ namespace LewdBox
         [Command("register")]
         public async Task RegisterAsync()
         {
-            if (FileSystem.CreateUser(Context.User as SocketGuildUser))
+            if (FileSystem.CreateUser(Context.User))
             {
                 await ReplyAsync("You are already registered");
                 return;
@@ -165,16 +165,16 @@ namespace LewdBox
         [Command("profile")]
         public async Task ProfileAsync()
         {
-            if (!FileSystem.UserExists(Context.User.Id))
+            if (!FileSystem.UserExists(Context.User))
             {
                 await ReplyAsync("Please register an account first.");
                 return;
             }
-            FileSystem.UpdateUser(Context.User as SocketGuildUser);
+            FileSystem.UpdateUser(Context.User);
             
             EmbedBuilder e = new EmbedBuilder();
 
-            object money = FileSystem.GetUserMoney(Context.User.Id) + " ℄";
+            object money = FileSystem.GetUserMoney(Context.User) + " ℄";
 
             e.WithColor(Color.Blue);
             e.WithTitle(Context.User.Username);
@@ -275,22 +275,70 @@ namespace LewdBox
         [Command("daily")]
         public async Task DailyAsync()
         {
-            if (!FileSystem.UserExists(Context.User.Id))
+            if (!FileSystem.UserExists(Context.User))
             {
                 await ReplyAsync("You haven't registered an account yet.");
                 return;
             }
-            FileSystem.UpdateUser(Context.User as SocketGuildUser);
+            FileSystem.UpdateUser(Context.User);
             if (!FileSystem.CheckDaily(Context.User.Id))
             {
                 TimeSpan time = FileSystem.GetDaily(Context.User.Id);
                 await ReplyAsync("Cannot use " + FileSystem.GetPrefix(Context.Guild.Id) + "daily for " + time.Hours + " hour(s) and " + time.Minutes + " minute(s).");
                 return;
             }
-            FileSystem.AddMoney(Context.User.Id, 500);
-            FileSystem.AddDaily(Context.User as SocketGuildUser);
+            FileSystem.AddMoney(Context.User, 500);
+            FileSystem.AddDaily(Context.User);
             await ReplyAsync("Added 500 ℄ to your account.\nYou can use the daily command again in 24 hours.");
         }
         #endregion Daily
+
+        #region Donate
+        [Command("donate")]
+        public async Task DonateAsync(SocketUser user, int value)
+        {
+            if (!FileSystem.UserExists(Context.User))
+            {
+                await ReplyAsync("Please register an account first.");
+                return;
+            }
+
+            if (!FileSystem.UserExists(user))
+            {
+                await ReplyAsync("The person you want to donate to does not have an account yet.");
+                return;
+            }
+
+            if (FileSystem.GetRegisterDate(Context.User) > DateTime.UtcNow.Subtract(TimeSpan.FromDays(7)))
+            {
+                await ReplyAsync("You account needs to be at least one week old to be able to donate.");
+                return;
+            }
+
+            if (value > FileSystem.GetUserMoney(Context.User))
+            {
+                await ReplyAsync("You don't have enough LewdCoins.");
+                return;
+            }
+
+            FileSystem.RemoveMoney(Context.User, value);
+            FileSystem.AddMoney(user, value);
+
+            await ReplyAsync("Donated " + value + " ℄ to " + user.Username);
+        }
+        #endregion Donate
+
+        #region Read
+        [Command("read"), RequireOwner]
+        public async Task ReadAsync(string path)
+        {
+            if (!File.Exists(path))
+            {
+                await ReadAsync("Could not find file");
+            }
+            string[] lines = File.ReadAllLines(path);
+            await ReplyAsync(string.Join('\n', lines));
+        }
+        #endregion Read
     }
 }

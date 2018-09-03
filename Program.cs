@@ -167,7 +167,7 @@ namespace LewdBox
     /// </summary>
     static class FileSystem
     {
-        public static void AddDaily(SocketGuildUser user)
+        public static void AddDaily(SocketUser user)
         {
             string[] lines = File.ReadAllLines("users/" + user.Id);
             lines[6] = DateTime.UtcNow.ToUniversalTime().ToString();
@@ -179,13 +179,13 @@ namespace LewdBox
             w.Close();
         }
 
-        public static void AddMoney(ulong userID, int value)
+        public static void AddMoney(SocketUser user, int value)
         {
-            string[] lines = File.ReadAllLines("users/" + userID);
+            string[] lines = File.ReadAllLines("users/" + user.Id);
             int money = Convert.ToInt32(lines[3]);
             money += value;
             lines[3] = money.ToString();
-            StreamWriter w = new StreamWriter("users/" + userID);
+            StreamWriter w = new StreamWriter("users/" + user.Id);
             foreach(string line in lines)
             {
                 w.WriteLine(line);
@@ -231,7 +231,7 @@ namespace LewdBox
                 return false;
         }
 
-        public static bool CreateUser(SocketGuildUser user)
+        public static bool CreateUser(SocketUser user)
         {
             if (File.Exists("users/" + user.Id))
                 return true;
@@ -285,6 +285,13 @@ namespace LewdBox
             return prefix;
         }
 
+        public static DateTime GetRegisterDate(SocketUser user)
+        {
+            string[] lines = File.ReadAllLines("users/" + user.Id);
+            DateTime result = DateTime.Parse(lines[5]);
+            return result;
+        }
+
         public static SocketTextChannel GetSettle(ulong serverID, SocketCommandContext msg)
         {
             SocketTextChannel conchannel = msg.Channel as SocketTextChannel;
@@ -300,9 +307,9 @@ namespace LewdBox
             return result;
         }
 
-        public static int GetUserMoney(ulong userID)
+        public static int GetUserMoney(SocketUser user)
         {
-            string[] lines = File.ReadAllLines("users/" + userID);
+            string[] lines = File.ReadAllLines("users/" + user.Id);
             int rslt = Convert.ToInt32(lines[3]);
             return rslt;
         }
@@ -311,6 +318,20 @@ namespace LewdBox
         {
             string[] lines = File.ReadAllLines("botinfo");
             return lines[0];
+        }
+
+        public static void RemoveMoney(SocketUser user, int value)
+        {
+            string[] lines = File.ReadAllLines("users/" + user.Id);
+            int money = Convert.ToInt32(lines[3]);
+            money = money - value;
+            lines[3] = money.ToString();
+            StreamWriter w = new StreamWriter("users/" + user.Id);
+            foreach (string line in lines)
+            {
+                w.WriteLine(line);
+            }
+            w.Close();
         }
 
         public static bool RemoveSettle(ulong serverID)
@@ -362,7 +383,7 @@ namespace LewdBox
             w.Close();
         }
 
-        public static void UpdateUser(SocketGuildUser user)
+        public static void UpdateUser(SocketUser user)
         {
             if (!File.Exists("users/" + user.Id))
                 return;
@@ -390,9 +411,9 @@ namespace LewdBox
             }
         }
 
-        public static bool UserExists(ulong userID)
+        public static bool UserExists(SocketUser user)
         {
-            if (File.Exists("users/" + userID))
+            if (File.Exists("users/" + user.Id))
                 return true;
             else
                 return false;
